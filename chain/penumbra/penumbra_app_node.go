@@ -173,7 +173,7 @@ func (p *PenumbraAppNode) AllocationsInputFileContainer() string {
 
 func (p *PenumbraAppNode) genesisFileContent(ctx context.Context) ([]byte, error) {
 	fr := dockerutil.NewFileRetriever(p.log, p.DockerClient, p.TestName)
-	gen, err := fr.SingleFileContent(ctx, p.VolumeName, ".penumbra/testnet_data/node0/tendermint/config/genesis.json")
+	gen, err := fr.SingleFileContent(ctx, p.VolumeName, ".penumbra/testnet_data/node0/cometbft/config/genesis.json")
 	if err != nil {
 		return nil, fmt.Errorf("error getting genesis.json content: %w", err)
 	}
