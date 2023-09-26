@@ -111,7 +111,7 @@ func (p *PenumbraAppNode) HomeDir() string {
 
 func (p *PenumbraAppNode) CreateKey(ctx context.Context, keyName string) error {
 	keyPath := filepath.Join(p.HomeDir(), "keys", keyName)
-	cmd := []string{"pcli", "-d", keyPath, "keys", "generate"}
+	cmd := []string{"pcli", "--home", keyPath, "keys", "generate"}
 	_, stderr, err := p.Exec(ctx, cmd, nil)
 	// already exists error is okay
 	if err != nil && !strings.Contains(string(stderr), "already exists, refusing to overwrite it") {
@@ -122,7 +122,7 @@ func (p *PenumbraAppNode) CreateKey(ctx context.Context, keyName string) error {
 
 func (p *PenumbraAppNode) FullViewingKey(ctx context.Context, keyName string) (string, error) {
 	keyPath := filepath.Join(p.HomeDir(), "keys", keyName)
-	cmd := []string{"pcli", "-d", keyPath, "keys", "export", "full-viewing-key"}
+	cmd := []string{"pcli", "--home", keyPath, "keys", "export", "full-viewing-key"}
 	stdout, _, err := p.Exec(ctx, cmd, nil)
 	if err != nil {
 		return "", err
@@ -136,7 +136,7 @@ func (p *PenumbraAppNode) FullViewingKey(ctx context.Context, keyName string) (s
 // RecoverKey restores a key from a given mnemonic.
 func (p *PenumbraAppNode) RecoverKey(ctx context.Context, keyName, mnemonic string) error {
 	keyPath := filepath.Join(p.HomeDir(), "keys", keyName)
-	cmd := []string{"pcli", "-d", keyPath, "keys", "import", "phrase", mnemonic}
+	cmd := []string{"pcli", "--home", keyPath, "keys", "import", "phrase", mnemonic}
 	_, stderr, err := p.Exec(ctx, cmd, nil)
 	// already exists error is okay
 	if err != nil && !strings.Contains(string(stderr), "already exists, refusing to overwrite it") {
@@ -151,7 +151,7 @@ func (p *PenumbraAppNode) InitValidatorFile(ctx context.Context, valKeyName stri
 	keyPath := filepath.Join(p.HomeDir(), "keys", valKeyName)
 	cmd := []string{
 		"pcli",
-		"-d", keyPath,
+		"--home", keyPath,
 		"validator", "definition", "template",
 		"--file", p.ValidatorDefinitionTemplateFilePathContainer(),
 	}
@@ -226,7 +226,7 @@ func (p *PenumbraAppNode) GenerateGenesisFile(
 func (p *PenumbraAppNode) GetAddress(ctx context.Context, keyName string) ([]byte, error) {
 	keyPath := filepath.Join(p.HomeDir(), "keys", keyName)
 	pdUrl := fmt.Sprintf("http://%s:8080", p.HostName())
-	cmd := []string{"pcli", "-d", keyPath, "-n", pdUrl, "view", "address"}
+	cmd := []string{"pcli", "--home", keyPath, "-n", pdUrl, "view", "address"}
 
 	stdout, _, err := p.Exec(ctx, cmd, nil)
 	if err != nil {
@@ -245,7 +245,7 @@ func (p *PenumbraAppNode) GetAddress(ctx context.Context, keyName string) ([]byt
 func (p *PenumbraAppNode) GetBalance(ctx context.Context, keyName string) (int64, error) {
 	keyPath := filepath.Join(p.HomeDir(), "keys", keyName)
 	pdUrl := fmt.Sprintf("http://%s:8080", p.HostName())
-	cmd := []string{"pcli", "-d", keyPath, "-n", pdUrl, "view", "balance"}
+	cmd := []string{"pcli", "--home", keyPath, "-n", pdUrl, "view", "balance"}
 
 	stdout, _, err := p.Exec(ctx, cmd, nil)
 	if err != nil {
@@ -257,7 +257,7 @@ func (p *PenumbraAppNode) GetBalance(ctx context.Context, keyName string) (int64
 }
 
 func (p *PenumbraAppNode) GetAddressBech32m(ctx context.Context, keyName string) (string, error) {
-	cmd := []string{"pcli", "-d", p.HomeDir(), "addr", "list"}
+	cmd := []string{"pcli", "--home", p.HomeDir(), "addr", "list"}
 	stdout, _, err := p.Exec(ctx, cmd, nil)
 	if err != nil {
 		return "", err
