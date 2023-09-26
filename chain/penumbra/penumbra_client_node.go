@@ -13,8 +13,12 @@ import (
 	volumetypes "github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
-	clientv1alpha1 "github.com/strangelove-ventures/interchaintest/v8/chain/penumbra/client/v1alpha1"
-	cryptov1alpha1 "github.com/strangelove-ventures/interchaintest/v8/chain/penumbra/core/crypto/v1alpha1"
+	shieldedpoolv1alpha1 "github.com/strangelove-ventures/interchaintest/v8/chain/penumbra/core/component/shielded_pool/v1alpha1"
+	// clientv1alpha1 "github.com/strangelove-ventures/interchaintest/v8/chain/penumbra/client/v1alpha1"
+	// cryptov1alpha1 "github.com/strangelove-ventures/interchaintest/v8/chain/penumbra/core/crypto/v1alpha1"
+	assetv1alpha1 "github.com/strangelove-ventures/interchaintest/v8/chain/penumbra/core/asset/v1alpha1"
+	numv1alpha1 "github.com/strangelove-ventures/interchaintest/v8/chain/penumbra/core/num/v1alpha1"
+	keysv1alpha1 "github.com/strangelove-ventures/interchaintest/v8/chain/penumbra/core/keys/v1alpha1"
 	custodyv1alpha1 "github.com/strangelove-ventures/interchaintest/v8/chain/penumbra/custody/v1alpha1"
 	viewv1alpha1 "github.com/strangelove-ventures/interchaintest/v8/chain/penumbra/view/v1alpha1"
 	"github.com/strangelove-ventures/interchaintest/v8/ibc"
@@ -145,14 +149,14 @@ func (p *PenumbraClientNode) SendFunds(ctx context.Context, amount ibc.WalletAmo
 	tpr := &viewv1alpha1.TransactionPlannerRequest{
 		AccountGroupId: nil,
 		Outputs: []*viewv1alpha1.TransactionPlannerRequest_Output{{
-			Value: &cryptov1alpha1.Value{
-				Amount: &cryptov1alpha1.Amount{
+			Value: &assetv1alpha1.Value{
+				Amount: &numv1alpha1.Amount{
 					Lo: lo,
 					Hi: hi,
 				},
-				AssetId: &cryptov1alpha1.AssetId{AltBaseDenom: amount.Denom},
+				AssetId: &assetv1alpha1.AssetId{AltBaseDenom: amount.Denom},
 			},
-			Address: &cryptov1alpha1.Address{AltBech32M: amount.Address},
+			Address: &keysv1alpha1.Address{AltBech32M: amount.Address},
 		}},
 	}
 
@@ -167,7 +171,7 @@ func (p *PenumbraClientNode) SendFunds(ctx context.Context, amount ibc.WalletAmo
 	custodyClient := custodyv1alpha1.NewCustodyProtocolServiceClient(channel)
 	authorizeReq := &custodyv1alpha1.AuthorizeRequest{
 		Plan:              resp.Plan,
-		AccountGroupId:    &cryptov1alpha1.AccountGroupId{Inner: make([]byte, 32)},
+		AccountGroupId:    &keysv1alpha1.AccountGroupId{Inner: make([]byte, 32)},
 		PreAuthorizations: []*custodyv1alpha1.PreAuthorization{},
 	}
 
@@ -224,10 +228,10 @@ func (p *PenumbraClientNode) GetBalance(ctx context.Context, denom string) (math
 	viewClient := viewv1alpha1.NewViewProtocolServiceClient(channel)
 
 	balanceRequest := &viewv1alpha1.BalancesRequest{
-		AccountFilter: &cryptov1alpha1.AddressIndex{
+		AccountFilter: &keysv1alpha1.AddressIndex{
 			Account: 0,
 		},
-		AssetIdFilter: &cryptov1alpha1.AssetId{
+		AssetIdFilter: &assetv1alpha1.AssetId{
 			AltBaseDenom: denom,
 		},
 	}
@@ -301,7 +305,7 @@ func translateBigInt(i math.Int) (uint64, uint64) {
 }
 
 // GetDenomMetadata invokes a gRPC request to obtain the DenomMetadata for a specified asset ID.
-func (p *PenumbraClientNode) GetDenomMetadata(ctx context.Context, assetId *cryptov1alpha1.AssetId) (*cryptov1alpha1.DenomMetadata, error) {
+func (p *PenumbraClientNode) GetDenomMetadata(ctx context.Context, assetId *assetv1alpha1.AssetId) (*assetv1alpha1.DenomMetadata, error) {
 	channel, err := grpc.Dial(
 		p.hostGRPCPort,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
@@ -311,8 +315,9 @@ func (p *PenumbraClientNode) GetDenomMetadata(ctx context.Context, assetId *cryp
 	}
 	defer channel.Close()
 
-	queryClient := clientv1alpha1.NewSpecificQueryServiceClient(channel)
-	req := &clientv1alpha1.DenomMetadataByIdRequest{
+	// queryClient := clientv1alpha1.NewSpecificQueryServiceClient(channel)
+	queryClient := shieldedpoolv1alpha1.NewQueryServiceClient(channel)
+	req := &shieldedpoolv1alpha1.DenomMetadataByIdRequest{
 		ChainId: p.Chain.Config().ChainID,
 		AssetId: assetId,
 	}
