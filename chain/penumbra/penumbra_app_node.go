@@ -111,10 +111,10 @@ func (p *PenumbraAppNode) HomeDir() string {
 
 func (p *PenumbraAppNode) CreateKey(ctx context.Context, keyName string) error {
 	keyPath := filepath.Join(p.HomeDir(), "keys", keyName)
-	cmd := []string{"pcli", "--home", keyPath, "keys", "generate"}
+	cmd := []string{"pcli", "--home", keyPath, "init", "soft-kms", "generate"}
 	_, stderr, err := p.Exec(ctx, cmd, nil)
 	// already exists error is okay
-	if err != nil && !strings.Contains(string(stderr), "already exists, refusing to overwrite it") {
+	if err != nil && !strings.Contains(string(stderr), "not empty;, refusing to initialize") {
 		return err
 	}
 	return nil
@@ -123,6 +123,9 @@ func (p *PenumbraAppNode) CreateKey(ctx context.Context, keyName string) error {
 func (p *PenumbraAppNode) FullViewingKey(ctx context.Context, keyName string) (string, error) {
 	keyPath := filepath.Join(p.HomeDir(), "keys", keyName)
 	pdUrl := fmt.Sprintf("http://%s:8080", p.HostName())
+	// Instead of running a `pcli` command to display the FVK, now we must parse it from the TOML file:
+	// <keyPath>/config.toml.
+	// Within that file, it's a top-level key called `full_viewing_key`.
 	cmd := []string{"pcli", "--home", keyPath, "-n", pdUrl, "keys", "export", "full-viewing-key"}
 
 	stdout, _, err := p.Exec(ctx, cmd, nil)
